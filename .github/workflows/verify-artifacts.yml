@@ -1,0 +1,38 @@
+name: Verify Deployment Artifacts
+
+on:
+  workflow_call:
+    inputs:
+      artifact-path:
+        required: true
+        type: string
+      signature-path:
+        required: true
+        type: string
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Import GPG public key
+        uses: crazy-max/ghaction-import-gpg@v5
+        with:
+          gpg_public_key: ${{ secrets.SIGNING_PUBLIC_KEY }}
+          
+      - name: Download artifact and signature
+        uses: actions/download-artifact@v3
+        with:
+          path: ./artifacts
+          
+      - name: Verify signature
+        run: |
+          cd artifacts/${{ inputs.artifact-path }}
+          gpg --verify ../SHA256SUMS.asc SHA256SUMS
+          sha256sum -c SHA256SUMS
+        
+      - name: Fail if verification fails
+        if: failure()
+        run: |
+          echo "Artifact verification failed!"
+          exit 1

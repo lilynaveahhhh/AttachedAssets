@@ -1,0 +1,45 @@
+name: Sign Deployment Artifacts
+
+on:
+  workflow_call:
+    inputs:
+      artifact-path:
+        required: true
+        type: string
+    outputs:
+      signature:
+        description: "The signature of the artifact"
+        value: ${{ jobs.sign.outputs.signature }}
+
+jobs:
+  sign:
+    runs-on: ubuntu-latest
+    outputs:
+      signature: ${{ steps.sign.outputs.signature }}
+    
+    steps:
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v5
+        with:
+          gpg_private_key: ${{ secrets.SIGNING_KEY }}
+          passphrase: ${{ secrets.SIGNING_PASSPHRASE }}
+          
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ inputs.artifact-path }}
+          path: ./artifacts
+          
+      - name: Sign artifact
+        id: sign
+        run: |
+          cd artifacts
+          sha256sum * > SHA256SUMS
+          gpg --detach-sign --armor SHA256SUMS
+          echo "signature=$(cat SHA256SUMS.asc)" >> $GITHUB_OUTPUT
+          
+      - name: Upload signature
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ inputs.artifact-path }}-signature
+          path: artifacts/SHA256SUMS*

@@ -1,0 +1,41 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "elasticbeanstalk:CreateApplicationVersion",
+                "elasticbeanstalk:DescribeApplicationVersions",
+                "elasticbeanstalk:DescribeEnvironments",
+                "elasticbeanstalk:UpdateEnvironment",
+                "elasticbeanstalk:ListTagsForResource",
+                "elasticbeanstalk:RequestEnvironmentInfo",
+                "elasticbeanstalk:DescribeEvents"
+            ],
+            "Resource": [
+                "arn:aws:elasticbeanstalk:*:*:application/nimbus-app",
+                "arn:aws:elasticbeanstalk:*:*:environment/nimbus-app/*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:PutObject",
+                "s3:GetObject",
+                "s3:ListBucket"
+            ],
+            "Resource": [
+                "arn:aws:s3:::elasticbeanstalk-*/*",
+                "arn:aws:s3:::elasticbeanstalk-*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "route53:ChangeResourceRecordSets",
+                "route53:ListResourceRecordSets"
+            ],
+            "Resource": "arn:aws:route53:::hostedzone/*"
+        }
+    ]
+}

@@ -1,0 +1,138 @@
+name: Blue/Green Deploy
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Cache node modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run check --if-present
+
+      - name: Build frontend + server bundle
+        run: npm run build --if-present
+
+  deploy_green:
+    name: Deploy to green environment
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Package server (zip)
+        run: |
+          mkdir -p build-artifact
+          zip -r build-artifact/app-${{ github.sha }} . -x node_modules/*** -x .git/*** -x .github/***
+
+      - name: Upload artifact to S3
+        env:
+          BUCKET: ${{ secrets.EB_S3_BUCKET }}
+        run: |
+          aws s3 cp build-artifact/app-${{ github.sha }}.zip s3://$BUCKET/app-${{ github.sha }}.zip
+
+      - name: Create application version
+        env:
+          BUCKET: ${{ secrets.EB_S3_BUCKET }}
+        run: |
+          aws elasticbeanstalk create-application-version --application-name ${{ secrets.EB_APPLICATION_NAME }} --version-label ${{ github.sha }} --source-bundle S3Bucket=$BUCKET,S3Key=app-${{ github.sha }}.zip
+
+      - name: Deploy to green environment
+        run: |
+          aws elasticbeanstalk update-environment --environment-name ${{ secrets.EB_ENV_GREEN }} --version-label ${{ github.sha }}
+
+      - name: Wait for green environment health check
+        timeout-minutes: 10
+        run: |
+          echo "Waiting for green environment to be ready..."
+          while true; do
+            STATUS=$(curl -s ${{ secrets.EB_GREEN_URL }}/health | jq -r .status)
+            if [ "$STATUS" = "ok" ]; then
+              echo "Green environment is healthy!"
+              break
+            fi
+            echo "Health check returned: $STATUS. Waiting 10s..."
+            sleep 10
+          done
+
+  smoke_test:
+    name: Smoke test green
+    needs: deploy_green
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run smoke tests against green
+        env:
+          BASE_URL: ${{ secrets.EB_GREEN_URL }}
+        run: npm run smoke
+
+  promote:
+    name: Promote to production (swap CNAMEs)
+    needs: smoke_test
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Swap environment CNAMEs (green -> production)
+        run: |
+          echo "Swapping CNAMEs: ${{ secrets.EB_ENV_GREEN }} -> ${{ secrets.EB_ENV_BLUE }}"
+          aws elasticbeanstalk swap-environment-cnames --source-environment-name ${{ secrets.EB_ENV_GREEN }} --destination-environment-name ${{ secrets.EB_ENV_BLUE }}
+
+  rollback_manual:
+    name: Manual rollback (commented manual job)
+    runs-on: ubuntu-latest
+    if: false
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Swap back (blue <- green)
+        run: |
+          aws elasticbeanstalk swap-environment-cnames --source-environment-name ${{ secrets.EB_ENV_BLUE }} --destination-environment-name ${{ secrets.EB_ENV_GREEN }}

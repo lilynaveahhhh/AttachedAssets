@@ -1,0 +1,156 @@
+{
+  "deployments": [
+    {
+      "id": "a92622db-a6e0-4af9-b36e-98f33f7085e2",
+      "environment": "blue",
+      "version": "v2.4.1",
+      "commitHash": "a3f7b2c",
+      "commitMessage": "Fix authentication bug",
+      "status": "active",
+      "deployedAt": "2025-11-06T04:18:45.716Z",
+      "healthCheckStatus": "healthy",
+      "metrics": {
+        "successRate": 98.5,
+        "avgResponseTime": 120,
+        "uptime": 99.98
+      }
+    },
+    {
+      "id": "86adf266-4434-47b5-b8e1-9b69141727ca",
+      "environment": "green",
+      "version": "v2.5.0",
+      "commitHash": "d9e1c4a",
+      "commitMessage": "Add new dashboard features",
+      "status": "idle",
+      "deployedAt": "2025-11-06T05:48:45.716Z",
+      "healthCheckStatus": "healthy",
+      "metrics": {
+        "successRate": 99.2,
+        "avgResponseTime": 105,
+        "uptime": 100
+      }
+    }
+  ],
+  "healthChecks": [
+    {
+      "id": "0283ec01-9386-4deb-a3a8-2eff8fc66c0d",
+      "deploymentId": "a92622db-a6e0-4af9-b36e-98f33f7085e2",
+      "endpoint": "/health",
+      "status": "passing",
+      "responseTime": 101,
+      "checkedAt": "2025-11-06T06:18:45.716Z"
+    },
+    {
+      "id": "65ead85e-60fa-4867-a87b-ce695bd314ff",
+      "deploymentId": "a92622db-a6e0-4af9-b36e-98f33f7085e2",
+      "endpoint": "/api/users",
+      "status": "passing",
+      "responseTime": 71,
+      "checkedAt": "2025-11-06T06:18:45.716Z"
+    },
+    {
+      "id": "70aa75fc-879c-4516-83df-4c8731977123",
+      "deploymentId": "a92622db-a6e0-4af9-b36e-98f33f7085e2",
+      "endpoint": "/api/products",
+      "status": "passing",
+      "responseTime": 137,
+      "checkedAt": "2025-11-06T06:18:45.716Z"
+    },
+    {
+      "id": "21b36417-4115-4a34-a2a8-e26069e1a67f",
+      "deploymentId": "a92622db-a6e0-4af9-b36e-98f33f7085e2",
+      "endpoint": "/metrics",
+      "status": "passing",
+      "responseTime": 58,
+      "checkedAt": "2025-11-06T06:18:45.716Z"
+    },
+    {
+      "id": "5f8a1787-5df0-49c0-9802-597ea6df3fa6",
+      "deploymentId": "86adf266-4434-47b5-b8e1-9b69141727ca",
+      "endpoint": "/health",
+      "status": "passing",
+      "responseTime": 103,
+      "checkedAt": "2025-11-06T06:18:45.716Z"
+    },
+    {
+      "id": "230e46f5-2e95-49e2-b1da-88e547a2f330",
+      "deploymentId": "86adf266-4434-47b5-b8e1-9b69141727ca",
+      "endpoint": "/api/users",
+      "status": "passing",
+      "responseTime": 95,
+      "checkedAt": "2025-11-06T06:18:45.717Z"
+    },
+    {
+      "id": "03b074a7-d930-456a-b018-0e667181d370",
+      "deploymentId": "86adf266-4434-47b5-b8e1-9b69141727ca",
+      "endpoint": "/api/products",
+      "status": "passing",
+      "responseTime": 64,
+      "checkedAt": "2025-11-06T06:18:45.717Z"
+    },
+    {
+      "id": "3ea7b6d7-2771-4152-bb0e-3830c14f0603",
+      "deploymentId": "86adf266-4434-47b5-b8e1-9b69141727ca",
+      "endpoint": "/metrics",
+      "status": "passing",
+      "responseTime": 86,
+      "checkedAt": "2025-11-06T06:18:45.717Z"
+    }
+  ],
+  "logs": [
+    {
+      "timestamp": "11:18:45 AM",
+      "level": "info",
+      "message": "Starting deployment to green environment"
+    },
+    {
+      "timestamp": "11:19:45 AM",
+      "level": "info",
+      "message": "Building application artifacts..."
+    },
+    {
+      "timestamp": "11:20:45 AM",
+      "level": "info",
+      "message": "Artifact build completed successfully"
+    },
+    {
+      "timestamp": "11:21:45 AM",
+      "level": "info",
+      "message": "Uploading to S3 bucket..."
+    },
+    {
+      "timestamp": "11:22:45 AM",
+      "level": "info",
+      "message": "Creating application version v2.5.0"
+    },
+    {
+      "timestamp": "11:23:45 AM",
+      "level": "warn",
+      "message": "Environment capacity at 80%"
+    },
+    {
+      "timestamp": "11:24:45 AM",
+      "level": "info",
+      "message": "Deploying to Elastic Beanstalk..."
+    },
+    {
+      "timestamp": "11:25:45 AM",
+      "level": "info",
+      "message": "Health check initiated"
+    },
+    {
+      "timestamp": "11:26:45 AM",
+      "level": "info",
+      "message": "All health checks passed"
+    },
+    {
+      "timestamp": "11:27:45 AM",
+      "level": "info",
+      "message": "Deployment completed successfully"
+    }
+  ],
+  "trafficSplit": {
+    "blue": 100,
+    "green": 0
+  }
+}
